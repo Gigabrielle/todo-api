@@ -9,8 +9,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 
-var stringConexao = builder.Configuration.GetConnectionString("conexao"); 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(stringConexao)); 
+var stringConexao = builder.Configuration.GetConnectionString("conexao");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(stringConexao));
 
 var app = builder.Build();
 
@@ -22,7 +22,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthorization(); 
+app.UseAuthorization();
 
 app.MapControllers();
 
