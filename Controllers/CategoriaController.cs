@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TodoApi.Models;
+using TodoApi.Services;
 
 namespace TodoApi.Controllers
 {
@@ -7,47 +8,61 @@ namespace TodoApi.Controllers
     [Route("[controller]")]
     public class CategoriaController : ControllerBase
     {
-        public static List<Categoria> categorias {get; set; } = new List<Categoria>();
+        private readonly CategoriaService _categoriaService;
+
+        public CategoriaController()
+        {
+            _categoriaService = new CategoriaService();
+        }
 
         [HttpGet]
-        public ActionResult<List<Categoria>> GetAll()
+        public ActionResult<IEnumerable<CategoriaOutputDto>> Get([FromQuery] int skip = 0, [FromQuery] int take = 10)
         {
+            var categorias = _categoriaService.GetAll(skip, take);
             return Ok(categorias);
         }
 
+
         [HttpGet("{id}")]
-        public ActionResult<Categoria> GetById(int id)
+        public ActionResult<CategoriaOutputDto> GetById(int id)
         {
-            var categoria = categorias.FirstOrDefault(c => c.Id == id);
-            if (categoria == null) return NotFound("Categoria não encontrada.");
+            var categoria = _categoriaService.GetById(id);
+            if (categoria == null)
+                return NotFound("Categoria não encontrada.");
+
             return Ok(categoria);
         }
 
         [HttpPost]
-        public ActionResult<Categoria> Create(Categoria novaCategoria)
+        public ActionResult<CategoriaOutputDto> Create(CategoriaInputDto novaCategoria)
         {
-            novaCategoria.Id = categorias.Count > 0 ? categorias.Max(c => c.Id) + 1 : 1;
-            categorias.Add(novaCategoria);
-            return CreatedAtAction(nameof(GetById), new { id = novaCategoria.Id }, novaCategoria);
+            if (string.IsNullOrWhiteSpace(novaCategoria.Nome))
+                return BadRequest("O nome da categoria é obrigatório.");
+
+            var categoriaCriada = _categoriaService.Create(novaCategoria);
+            return CreatedAtAction(nameof(GetById), new { id = categoriaCriada.Id }, categoriaCriada);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Categoria categoriaAtualizada)
+        public IActionResult Update(int id, CategoriaInputDto categoriaAtualizada)
         {
-            var categoria = categorias.FirstOrDefault(c => c.Id == id);
-            if (categoria == null) return NotFound("Categoria não encontrada.");
+            if (string.IsNullOrWhiteSpace(categoriaAtualizada.Nome))
+                return BadRequest("O nome da categoria é obrigatório.");
 
-            categoria.Nome = categoriaAtualizada.Nome;
+            var atualizou = _categoriaService.Update(id, categoriaAtualizada);
+            if (!atualizou)
+                return NotFound("Categoria não encontrada.");
+
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var categoria = categorias.FirstOrDefault(c => c.Id == id);
-            if (categoria == null) return NotFound("Categoria não encontrada.");
+            var deletou = _categoriaService.Delete(id);
+            if (!deletou)
+                return NotFound("Categoria não encontrada.");
 
-            categorias.Remove(categoria);
             return NoContent();
         }
     }
